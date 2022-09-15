@@ -7,15 +7,22 @@ public class ChainChecker
     public List<Chain> GetChains(GameObject[,] grid)
     {
         List<Chain> chains = new List<Chain>();
+        
+        chains.AddRange(GetHorizontalChains(grid));
+        chains.AddRange(GetVerticalChains(grid));
+
+        return chains;
+    }
+
+    private List<Chain> GetHorizontalChains(GameObject[,] grid)
+    {
+        List<Chain> chains = new List<Chain>();
         int startPos = 0;
         int chainCount = 0;
         string chainColor = "";
         int gridWidth = grid.GetLength(0);
         int gridHeight = grid.GetLength(1);
 
-        Debug.Log("Checking chains " + gridWidth + " " + gridHeight);
-
-        // check horizontal chains
         for (int y = 0; y < gridHeight; y++)
         {
 
@@ -25,14 +32,13 @@ public class ChainChecker
 
                 if (IsChainableBlock(block))
                 {
-                    if(chainCount == 0)
+                    if (chainCount == 0)
                     {
                         startPos = x;
                         chainCount = 1;
                         chainColor = block.tag;
-                        Debug.Log("New " + chainColor + " chain");
                     }
-                    else if(block.tag == chainColor)
+                    else if (block.tag == chainColor)
                     {
                         chainCount++;
                     }
@@ -51,20 +57,12 @@ public class ChainChecker
                             blocks[j] = grid[startPos + j, y];
                         }
 
-                        Debug.Log("Chain found: " + blocks.Length);
-
                         chains.Add(new Chain(blocks, chainColor));
                         chainCount = 0;
                         chainColor = "";
                     }
                     else
                     {
-                        if(chainCount > 0)
-                        {
-                            Debug.Log("Chain too small: " + chainCount);
-                           
-                        }
-                        
                         chainCount = 0;
                         chainColor = "";
                     }
@@ -72,8 +70,68 @@ public class ChainChecker
             }
         }
 
-        Debug.Log("Returning " + chains.Count + " chains");
         return chains;
+
+    }
+
+    private List<Chain> GetVerticalChains(GameObject[,] grid)
+    {
+        List<Chain> chains = new List<Chain>();
+        int startPos = 0;
+        int chainCount = 0;
+        string chainColor = "";
+        int gridWidth = grid.GetLength(0);
+        int gridHeight = grid.GetLength(1);
+
+        for (int x = 0; x < gridWidth; x++)
+        {
+
+            for (int y = 0; y < gridHeight; y++)
+            {
+                GameObject block = grid[x, y];
+
+                if (IsChainableBlock(block))
+                {
+                    if (chainCount == 0)
+                    {
+                        startPos = y;
+                        chainCount = 1;
+                        chainColor = block.tag;
+                    }
+                    else if (block.tag == chainColor)
+                    {
+                        chainCount++;
+                    }
+                }
+
+                bool endOfChain = y == gridHeight - 1 || !IsChainableBlock(grid[x, y + 1]) || grid[x, y + 1].tag != chainColor;
+
+                if (endOfChain)
+                {
+                    if (chainCount >= 3)
+                    {
+                        GameObject[] blocks = new GameObject[chainCount];
+
+                        for (int j = 0; j < chainCount; j++)
+                        {
+                            blocks[j] = grid[x, startPos + j];
+                        }
+
+                        chains.Add(new Chain(blocks, chainColor));
+                        chainCount = 0;
+                        chainColor = "";
+                    }
+                    else
+                    {
+                        chainCount = 0;
+                        chainColor = "";
+                    }
+                }
+            }
+        }
+
+        return chains;
+
     }
 
     private bool IsChainableBlock(GameObject block)
