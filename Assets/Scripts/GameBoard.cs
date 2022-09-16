@@ -13,8 +13,9 @@ public class GameBoard : MonoBehaviour
 
     private ChainChecker chainChecker = new ChainChecker();
 
-
-    // Start is called before the first frame update
+    public delegate void OnTurnOver(List<Chain> matchedChains);
+    public OnTurnOver onTurnOver;
+   
     void Start()
     {
         AddBordersToGrid();
@@ -123,23 +124,20 @@ public class GameBoard : MonoBehaviour
 
     private void CheckForMatches()
     {
-        
+        List<Chain> chains = chainChecker.GetChains(grid);
+        onTurnOver(chains);
+    }
 
-        // destroy chain blocks
-
-        foreach (Chain chain in chainChecker.GetChains(grid))
+    public void DestroyBlocks(HashSet<GameObject> blocks)
+    {
+        foreach(GameObject block in blocks)
         {
-            foreach (GameObject block in chain.blocks)
-            {
-                int xPos = Mathf.RoundToInt(block.transform.position.x);
-                int yPos = Mathf.RoundToInt(block.transform.position.y);
+            int xPos = Mathf.RoundToInt(block.transform.position.x);
+            int yPos = Mathf.RoundToInt(block.transform.position.y);
 
-                Destroy(block, 1.0f);
-                grid[xPos, yPos] = null;
-
-            }
+            Destroy(block, 1.0f);
+            grid[xPos, yPos] = null;
         }
-
         Invoke("MoveAllBlocksDown", 1.1f);
     }
 
