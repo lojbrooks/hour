@@ -11,6 +11,9 @@ public class GameManager : MonoBehaviour
     private float comboMultiplier = 1f;
     private String nextCombo = "White";
 
+    private long score = 0;
+    private int level = 1;
+
     private GameBoard gameBoard;
 
     private void Awake()
@@ -30,7 +33,10 @@ public class GameManager : MonoBehaviour
     {
         Text comboText = GameObject.Find("ComboText").GetComponent<Text>();
         comboText.text = "x " + comboMultiplier;
-        
+
+
+        Text scoreText = GameObject.Find("ScoreText").GetComponent<Text>();
+        scoreText.text = score.ToString();
     }
 
     public void OnTurnOver(List<Chain> chains)
@@ -43,7 +49,7 @@ public class GameManager : MonoBehaviour
             
             foreach(Chain chain in comboChains)
             {
-                // todo update score
+                ScoreChain(chain);
                 blocksToDestroy.UnionWith(chain.blocks);
             }
             comboMultiplier += COMBO_INCREMENT;
@@ -60,12 +66,14 @@ public class GameManager : MonoBehaviour
 
         } else
         {
-            foreach(Chain chain in chains)
+            comboMultiplier = 1f;
+
+            foreach (Chain chain in chains)
             {
-                // todo update score
+                ScoreChain(chain);
                 blocksToDestroy.UnionWith(chain.blocks);
             }
-            comboMultiplier = 1f;
+          
             gameBoard.DestroyBlocks(blocksToDestroy);
         }
     }
@@ -82,5 +90,11 @@ public class GameManager : MonoBehaviour
             comboColor.color = Color.black;
         }
         
+    }
+
+    private void ScoreChain(Chain chain)
+    {
+        int chainSizeScore = chain.blocks.Count() - 2;
+        score += (long) (level * chainSizeScore * comboMultiplier);
     }
 }
