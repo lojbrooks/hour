@@ -37,6 +37,9 @@ public class GameManager : MonoBehaviour
 
         Text scoreText = GameObject.Find("ScoreText").GetComponent<Text>();
         scoreText.text = score.ToString();
+
+        Text levelText = GameObject.Find("LevelText").GetComponent<Text>();
+        levelText.text = "Level " + level;
     }
 
     public void OnTurnOver(List<Chain> chains)
@@ -76,6 +79,12 @@ public class GameManager : MonoBehaviour
           
             gameBoard.DestroyBlocks(blocksToDestroy);
         }
+
+        if(score > 0)
+        {
+            level = (int) Math.Max(1, Math.Ceiling(Math.Log10(score)));
+        }
+        
     }
 
     private void SetNextComboColor(string nextColor)
