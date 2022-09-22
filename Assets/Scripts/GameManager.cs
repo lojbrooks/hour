@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
 
     private long score = 0;
     private int level = 1;
+    private int secondsRemaining = 60 * 60;
 
     private GameBoard gameBoard;
 
@@ -26,6 +27,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         SetNextComboColor("White");
+        InvokeRepeating("OnSecondPassed", 1f, 1f);
     }
 
     // Update is called once per frame
@@ -40,6 +42,9 @@ public class GameManager : MonoBehaviour
 
         Text levelText = GameObject.Find("LevelText").GetComponent<Text>();
         levelText.text = "Level " + level;
+
+        Text timeText = GameObject.Find("TimeText").GetComponent<Text>();
+        timeText.text = (secondsRemaining / 60).ToString("D2") + ":" + (secondsRemaining % 60).ToString("D2");
     }
 
     public void OnTurnOver(List<Chain> chains)
@@ -105,5 +110,13 @@ public class GameManager : MonoBehaviour
     {
         int chainSizeScore = chain.blocks.Count() - 2;
         score += (long) (level * chainSizeScore * comboMultiplier);
+    }
+
+    private void OnSecondPassed()
+    {
+        if(--secondsRemaining <= 0)
+        {
+            // todo game over
+        }
     }
 }
