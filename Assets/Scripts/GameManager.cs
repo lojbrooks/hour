@@ -85,10 +85,8 @@ public class GameManager : MonoBehaviour
             gameBoard.DestroyBlocks(blocksToDestroy);
         }
 
-        if(score > 0)
-        {
-            level = (int) Math.Max(1, Math.Ceiling(Math.Log10(score)));
-        }
+        
+        level = (int) Math.Max(1, Math.Ceiling(Math.Log10(score)));
         
     }
 

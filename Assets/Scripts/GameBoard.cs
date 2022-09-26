@@ -147,12 +147,26 @@ public class GameBoard : MonoBehaviour
         {
             for (int x = 0; x < GRID_WIDTH; x++)
             {
-                if (grid[x, y - 1] == null && grid[x, y] != null)
+                GameObject block = grid[x, y];
+
+                if (block != null)
                 {
-                    GameObject block = grid[x, y];
-                    block.transform.position -= new Vector3(0, 1, 0);
-                    grid[x, y - 1] = grid[x, y];
-                    grid[x, y] = null;
+                    int movesDown = 0;
+
+                    for(int j = y-1; j >= 0; j--)
+                    {
+                        if(grid[x,j] == null)
+                        {
+                            movesDown++;
+                        }
+                    }
+                    if(movesDown > 0)
+                    {
+                        block.transform.position -= new Vector3(0, movesDown, 0);
+                        grid[x, y - movesDown] = grid[x, y];
+                        grid[x, y] = null;
+                    }
+                    
                 }
             }
         }
