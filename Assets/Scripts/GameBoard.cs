@@ -14,7 +14,7 @@ public class GameBoard : MonoBehaviour
     private ChainChecker chainChecker = new ChainChecker();
 
     public delegate void OnTurnOver(List<Chain> matchedChains);
-    public OnTurnOver onTurnOver;
+    public OnTurnOver onChainsFound;
    
     void Start()
     {
@@ -125,7 +125,7 @@ public class GameBoard : MonoBehaviour
     private void CheckForMatches()
     {
         List<Chain> chains = chainChecker.GetChains(grid);
-        onTurnOver(chains);
+        onChainsFound(chains);
     }
 
     public void DestroyBlocks(HashSet<GameObject> blocks)
@@ -170,6 +170,7 @@ public class GameBoard : MonoBehaviour
                 }
             }
         }
+        CheckForMatches();
     }
 
     private void DestroyFullColumns()

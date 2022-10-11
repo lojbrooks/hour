@@ -9,24 +9,24 @@ public class GameManager : MonoBehaviour
 {
     private const float COMBO_INCREMENT = 0.05f;
     private float comboMultiplier = 1f;
-    private String nextCombo = "White";
+    private string nextCombo = null;
 
     private long score = 0;
     private int level = 1;
     private int secondsRemaining = 60 * 60;
 
     private GameBoard gameBoard;
+    private bool isHandlingChains = false;
 
     private void Awake()
     {
         gameBoard = FindObjectOfType<GameBoard>();
-        gameBoard.onTurnOver += OnTurnOver;
+        gameBoard.onChainsFound += HandleChains;
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        SetNextComboColor("White");
         InvokeRepeating("OnSecondPassed", 1f, 1f);
     }
 
@@ -45,63 +45,89 @@ public class GameManager : MonoBehaviour
 
         Text timeText = GameObject.Find("TimeText").GetComponent<Text>();
         timeText.text = (secondsRemaining / 60).ToString("D2") + ":" + (secondsRemaining % 60).ToString("D2");
+
+        Image comboColor = GameObject.Find("ComboColor").GetComponent<Image>();
+        if (nextCombo == "White")
+        {
+            comboColor.color = Color.white;
+        }
+        else if (nextCombo == "Black")
+        {
+            comboColor.color = Color.black;
+        } else
+        {
+            comboColor.color = Color.grey;
+        }
     }
 
-    public void OnTurnOver(List<Chain> chains)
+    public void HandleChains(List<Chain> chains)
     {
-        List<Chain> comboChains = chains.Where(c => c.chainColor == nextCombo).ToList();
-        HashSet<GameObject> blocksToDestroy = new HashSet<GameObject>();
-
-        if (comboChains.Count > 0)
+        
+        if (!isHandlingChains)
         {
-            
-            foreach(Chain chain in comboChains)
+            isHandlingChains = true;
+            bool matchedCombo = chains.Any(c => c.chainColor == nextCombo);
+
+            if(nextCombo == null && chains.Count > 0)
             {
-                ScoreChain(chain);
-                blocksToDestroy.UnionWith(chain.blocks);
+                nextCombo = chains[0].chainColor;
             }
+            else if (!matchedCombo)
+            {
+                comboMultiplier = 1f;
+                nextCombo = null;
+            }
+
+        }
+
+        if (chains.Count > 0)
+        {
+            ScoreAndDestroyChains(chains);
+        }
+        else
+        {
+            OnTurnOver();
+        }
+
+    }
+
+    public void OnTurnOver()
+    {
+        if(nextCombo != null)
+        {
             comboMultiplier += COMBO_INCREMENT;
 
-            if(nextCombo == "White")
+            if (nextCombo == "White")
             {
                 SetNextComboColor("Black");
-            } else
+            }
+            else
             {
                 SetNextComboColor("White");
             }
-
-            gameBoard.DestroyBlocks(blocksToDestroy);
-
-        } else
-        {
-            comboMultiplier = 1f;
-
-            foreach (Chain chain in chains)
-            {
-                ScoreChain(chain);
-                blocksToDestroy.UnionWith(chain.blocks);
-            }
-          
-            gameBoard.DestroyBlocks(blocksToDestroy);
         }
 
-        
-        level = (int) Math.Max(1, Math.Ceiling(Math.Log10(score)));
-        
+        isHandlingChains = false;
+        level = (int)Math.Max(1, Math.Ceiling(Math.Log10(score)));
+
     }
 
     private void SetNextComboColor(string nextColor)
     {
         nextCombo = nextColor;
-        Image comboColor = GameObject.Find("ComboColor").GetComponent<Image>();
-        if(nextCombo == "White")
+    }
+
+    private void ScoreAndDestroyChains(List<Chain> chains)
+    {
+        HashSet<GameObject> blocksToDestroy = new HashSet<GameObject>();
+
+        foreach (Chain chain in chains)
         {
-            comboColor.color = Color.white;
-        } else if(nextCombo == "Black")
-        {
-            comboColor.color = Color.black;
+            ScoreChain(chain);
+            blocksToDestroy.UnionWith(chain.blocks);
         }
-        
+
+        gameBoard.DestroyBlocks(blocksToDestroy);
     }
 
     private void ScoreChain(Chain chain)
