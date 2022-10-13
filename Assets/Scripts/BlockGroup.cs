@@ -6,9 +6,7 @@ using UnityEngine.EventSystems;
 
 public class BlockGroup : MonoBehaviour
 {
-    
-    public GameObject[] blocks;
-
+    public GameObject block;
     private Collider2D blockCollider;
     private Vector3 startPosition;
     private GameBoard gameBoard;
@@ -88,7 +86,18 @@ public class BlockGroup : MonoBehaviour
 
         foreach (Vector3 spawnPos in spawnPositions)
         {
-            GameObject newBlock = Instantiate(blocks[Random.Range(0, blocks.Length)], spawnPos, Quaternion.identity);
+            int randomPercent = Random.Range(0, 101);
+            BlockType blockType;
+            if(randomPercent < 50)
+            {
+                blockType = BlockType.White;
+            } else
+            {
+                blockType = BlockType.Black;
+            }
+
+            GameObject newBlock = Instantiate(block, spawnPos, Quaternion.identity);
+            newBlock.GetComponent<Block>().blockType = blockType;
             newBlock.transform.SetParent(transform);
 
         }

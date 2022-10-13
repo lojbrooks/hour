@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ChainChecker
 {
-    public List<Chain> GetChains(GameObject[,] grid)
+    public List<Chain> GetChains(Block[,] grid)
     {
         List<Chain> chains = new List<Chain>();
         
@@ -14,12 +14,12 @@ public class ChainChecker
         return chains;
     }
 
-    private List<Chain> GetHorizontalChains(GameObject[,] grid)
+    private List<Chain> GetHorizontalChains(Block[,] grid)
     {
         List<Chain> chains = new List<Chain>();
         int startPos = 0;
         int chainCount = 0;
-        string chainColor = "";
+        BlockType chainColor = BlockType.Empty;
         int gridWidth = grid.GetLength(0);
         int gridHeight = grid.GetLength(1);
 
@@ -28,7 +28,7 @@ public class ChainChecker
 
             for (int x = 0; x < gridWidth; x++)
             {
-                GameObject block = grid[x, y];
+                Block block = grid[x, y];
 
                 if (IsChainableBlock(block))
                 {
@@ -36,21 +36,21 @@ public class ChainChecker
                     {
                         startPos = x;
                         chainCount = 1;
-                        chainColor = block.tag;
+                        chainColor = block.blockType;
                     }
-                    else if (block.tag == chainColor)
+                    else if (block.blockType == chainColor)
                     {
                         chainCount++;
                     }
                 }
 
-                bool endOfChain = x == gridWidth - 1 || !IsChainableBlock(grid[x + 1, y]) || grid[x + 1, y].tag != chainColor;
+                bool endOfChain = x == gridWidth - 1 || !IsChainableBlock(grid[x + 1, y]) || grid[x + 1, y].blockType != chainColor;
 
                 if (endOfChain)
                 {
                     if (chainCount >= 3)
                     {
-                        GameObject[] blocks = new GameObject[chainCount];
+                        Block[] blocks = new Block[chainCount];
 
                         for (int j = 0; j < chainCount; j++)
                         {
@@ -59,12 +59,12 @@ public class ChainChecker
 
                         chains.Add(new Chain(blocks, chainColor));
                         chainCount = 0;
-                        chainColor = "";
+                        chainColor = BlockType.Empty;
                     }
                     else
                     {
                         chainCount = 0;
-                        chainColor = "";
+                        chainColor = BlockType.Empty;
                     }
                 }
             }
@@ -74,12 +74,12 @@ public class ChainChecker
 
     }
 
-    private List<Chain> GetVerticalChains(GameObject[,] grid)
+    private List<Chain> GetVerticalChains(Block[,] grid)
     {
         List<Chain> chains = new List<Chain>();
         int startPos = 0;
         int chainCount = 0;
-        string chainColor = "";
+        BlockType chainColor = BlockType.Empty;
         int gridWidth = grid.GetLength(0);
         int gridHeight = grid.GetLength(1);
 
@@ -88,7 +88,7 @@ public class ChainChecker
 
             for (int y = 0; y < gridHeight; y++)
             {
-                GameObject block = grid[x, y];
+                Block block = grid[x, y];
 
                 if (IsChainableBlock(block))
                 {
@@ -96,21 +96,21 @@ public class ChainChecker
                     {
                         startPos = y;
                         chainCount = 1;
-                        chainColor = block.tag;
+                        chainColor = block.blockType;
                     }
-                    else if (block.tag == chainColor)
+                    else if (block.blockType == chainColor)
                     {
                         chainCount++;
                     }
                 }
 
-                bool endOfChain = y == gridHeight - 1 || !IsChainableBlock(grid[x, y + 1]) || grid[x, y + 1].tag != chainColor;
+                bool endOfChain = y == gridHeight - 1 || !IsChainableBlock(grid[x, y + 1]) || grid[x, y + 1].blockType != chainColor;
 
                 if (endOfChain)
                 {
                     if (chainCount >= 3)
                     {
-                        GameObject[] blocks = new GameObject[chainCount];
+                        Block[] blocks = new Block[chainCount];
 
                         for (int j = 0; j < chainCount; j++)
                         {
@@ -119,12 +119,12 @@ public class ChainChecker
 
                         chains.Add(new Chain(blocks, chainColor));
                         chainCount = 0;
-                        chainColor = "";
+                        chainColor = BlockType.Empty;
                     }
                     else
                     {
                         chainCount = 0;
-                        chainColor = "";
+                        chainColor = BlockType.Empty;
                     }
                 }
             }
@@ -134,9 +134,9 @@ public class ChainChecker
 
     }
 
-    private bool IsChainableBlock(GameObject block)
+    private bool IsChainableBlock(Block block)
     {
-        return block != null && (block.tag == "Black" || block.tag == "White");
+        return block != null && (block.blockType == BlockType.Black || block.blockType == BlockType.White);
     }
 }
 

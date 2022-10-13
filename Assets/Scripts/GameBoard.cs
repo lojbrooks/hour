@@ -6,16 +6,16 @@ using UnityEngine.UI;
 
 public class GameBoard : MonoBehaviour
 {
-
+    public GameObject blockPrefab;
     public const int GRID_HEIGHT = 8;
     public const int GRID_WIDTH = 7;
-    public static GameObject[,] grid = new GameObject[GRID_WIDTH, GRID_HEIGHT];
+    public static Block[,] grid = new Block[GRID_WIDTH, GRID_HEIGHT];
 
     private ChainChecker chainChecker = new ChainChecker();
 
     public delegate void OnTurnOver(List<Chain> matchedChains);
     public OnTurnOver onChainsFound;
-   
+
     void Start()
     {
         AddBordersToGrid();
@@ -23,11 +23,20 @@ public class GameBoard : MonoBehaviour
 
     private void AddBordersToGrid()
     {
-        GameObject[] borders = GameObject.FindGameObjectsWithTag("Border");
+        List<Block> borders = new List<Block>();
+        borders.Add(Instantiate(blockPrefab, new Vector2(0, 0), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(1, 0), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(0, 1), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(0, 2), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(GRID_WIDTH - 1, 0), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(GRID_WIDTH - 2, 0), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(GRID_WIDTH - 1, 1), Quaternion.identity).GetComponent<Block>());
+        borders.Add(Instantiate(blockPrefab, new Vector2(GRID_WIDTH - 1, 2), Quaternion.identity).GetComponent<Block>());
 
-        foreach (GameObject border in borders)
+        foreach (Block block in borders)
         {
-            AddToGrid(border);
+            block.blockType = BlockType.Border;
+            AddToGrid(block);
         }
     }
 
@@ -46,17 +55,18 @@ public class GameBoard : MonoBehaviour
         {
             for (int j = 0; j < GRID_WIDTH; j++)
             {
-                GameObject block = grid[j, i];
+                Block block = grid[j, i];
+
                 if (block != null)
                 {
-                    string tag = block.tag;
 
-                    if (tag == "Border")
-                        sb.Append("o");
-                    else if (tag == "Black")
+                    BlockType blockType = grid[j, i].GetComponent<Block>().blockType;
+                    if (blockType == BlockType.Black)
                         sb.Append("b");
-                    else if (tag == "White")
+                    else if (blockType == BlockType.White)
                         sb.Append("w");
+                    else if (blockType == BlockType.Border)
+                        sb.Append("o");
                 }
                 else
                 {
@@ -83,7 +93,7 @@ public class GameBoard : MonoBehaviour
         foreach (Transform block in blockGroup.transform)
         {
             MoveBlockDown(block.gameObject);
-            AddToGrid(block.gameObject);
+            AddToGrid(block.GetComponent<Block>());
         }
 
         CheckForMatches();
@@ -109,7 +119,7 @@ public class GameBoard : MonoBehaviour
     }
 
 
-    private void AddToGrid(GameObject block)
+    private void AddToGrid(Block block)
     {
 
         int roundedX = Mathf.RoundToInt(block.transform.position.x);
@@ -117,7 +127,6 @@ public class GameBoard : MonoBehaviour
 
         if (roundedX >= 0 && roundedX <= GameBoard.GRID_WIDTH && roundedY >= 0 && roundedY <= GameBoard.GRID_HEIGHT)
         {
-            Debug.Log("Adding " + block.tag + " to grid: x = " + roundedX + " y = " + roundedY);
             GameBoard.grid[roundedX, roundedY] = block;
         }
     }
@@ -128,14 +137,14 @@ public class GameBoard : MonoBehaviour
         onChainsFound(chains);
     }
 
-    public void DestroyBlocks(HashSet<GameObject> blocks)
+    public void DestroyBlocks(HashSet<Block> blocks)
     {
-        foreach(GameObject block in blocks)
+        foreach (Block block in blocks)
         {
             int xPos = Mathf.RoundToInt(block.transform.position.x);
             int yPos = Mathf.RoundToInt(block.transform.position.y);
 
-            Destroy(block, 1.0f);
+            Destroy(block.gameObject, 1.0f);
             grid[xPos, yPos] = null;
         }
         Invoke("MoveAllBlocksDown", 1.1f);
@@ -147,26 +156,26 @@ public class GameBoard : MonoBehaviour
         {
             for (int x = 0; x < GRID_WIDTH; x++)
             {
-                GameObject block = grid[x, y];
+                Block block = grid[x, y];
 
                 if (block != null)
                 {
                     int movesDown = 0;
 
-                    for(int j = y-1; j >= 0; j--)
+                    for (int j = y - 1; j >= 0; j--)
                     {
-                        if(grid[x,j] == null)
+                        if (grid[x, j] == null)
                         {
                             movesDown++;
                         }
                     }
-                    if(movesDown > 0)
+                    if (movesDown > 0)
                     {
                         block.transform.position -= new Vector3(0, movesDown, 0);
                         grid[x, y - movesDown] = grid[x, y];
                         grid[x, y] = null;
                     }
-                    
+
                 }
             }
         }
@@ -191,9 +200,9 @@ public class GameBoard : MonoBehaviour
             {
                 for (int y = 0; y < GRID_HEIGHT; y++)
                 {
-                    GameObject block = grid[x, y];
+                    Block block = grid[x, y];
 
-                    if (block.tag != "Border")
+                    if (block.blockType != BlockType.Border)
                     {
                         Destroy(block);
                         grid[x, y] = null;

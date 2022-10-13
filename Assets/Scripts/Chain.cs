@@ -4,12 +4,12 @@ using UnityEngine;
 
 public struct Chain
 {
-    public Chain(GameObject[] blocks, string chainColor)
+    public Chain(Block[] blocks, BlockType chainColor)
     {
         this.blocks = blocks;
         this.chainColor = chainColor;
     }
 
-    public GameObject[] blocks { get; }
-    public string chainColor { get; }
+    public Block[] blocks { get; }
+    public BlockType chainColor { get; }
 }
