@@ -12,9 +12,16 @@ public class GameBoard : MonoBehaviour
     public static Block[,] grid = new Block[GRID_WIDTH, GRID_HEIGHT];
 
     private ChainChecker chainChecker = new ChainChecker();
+    private bool isChaining = false;
 
-    public delegate void OnTurnOver(List<Chain> matchedChains);
-    public OnTurnOver onChainsFound;
+    public delegate void OnChainsFound(List<Chain> matchedChains, bool isChaining);
+    public OnChainsFound onChainsFound;
+
+    public delegate void OnPowerBlockDestroyed(Block block);
+    public OnPowerBlockDestroyed onPowerBlockDestroyed;
+
+    public delegate void OnTurnOver(List<Block> powerBlocks);
+    public OnTurnOver onTurnOver;
 
     void Start()
     {
@@ -67,6 +74,8 @@ public class GameBoard : MonoBehaviour
                         sb.Append("w");
                     else if (blockType == BlockType.Border)
                         sb.Append("o");
+                    else if (block.isPowerBlock())
+                        sb.Append("*");
                 }
                 else
                 {
@@ -90,9 +99,10 @@ public class GameBoard : MonoBehaviour
 
     public void OnBlockGroupDropped(GameObject blockGroup)
     {
+        Debug.Log("OnBlockGroupDropped");
         foreach (Transform block in blockGroup.transform)
         {
-            MoveBlockDown(block.gameObject);
+            MoveBlockDown(block.GetComponent<Block>());
             AddToGrid(block.GetComponent<Block>());
         }
 
@@ -100,15 +110,40 @@ public class GameBoard : MonoBehaviour
         DestroyFullColumns();
     }
 
-    private void MoveBlockDown(GameObject block)
+    private void MoveBlockDown(Block block)
     {
         while (BlockCanMoveDown(block))
         {
             block.transform.position += new Vector3(0, -1, 0);
         }
+
+        CheckBlockHitBottom(block);
     }
 
-    private bool BlockCanMoveDown(GameObject block)
+    private void CheckBlockHitBottom(Block block)
+    {
+        bool hitBottom = false;
+        int xPos = Mathf.RoundToInt(block.transform.position.x);
+        int yPos = Mathf.RoundToInt(block.transform.position.y);
+        if (yPos > 0)
+        {
+            Block blockBelow = grid[xPos, yPos - 1];
+            hitBottom = blockBelow != null && blockBelow.blockType == BlockType.Border;
+        }
+        else
+        {
+            hitBottom = true;
+        }
+
+        if (hitBottom && block.isPowerBlock())
+        {
+            Debug.Log("Power block hit bottom - destroy");
+            DestroyBlocks(new HashSet<Block>() { block });
+            onPowerBlockDestroyed(block);
+        }
+    }
+
+    private bool BlockCanMoveDown(Block block)
     {
         int xPos = Mathf.RoundToInt(block.transform.position.x);
         int yPos = Mathf.RoundToInt(block.transform.position.y) - 1;
@@ -134,7 +169,47 @@ public class GameBoard : MonoBehaviour
     private void CheckForMatches()
     {
         List<Chain> chains = chainChecker.GetChains(grid);
-        onChainsFound(chains);
+
+        if (chains.Count == 0)
+        {
+            Debug.Log("No matches found - turn over");
+            isChaining = false;
+            onTurnOver(GetPowerBlocksInGrid());
+        }
+        else
+        {
+            onChainsFound(chains, isChaining);
+
+            HashSet<Block> blocksToDestroy = new HashSet<Block>();
+
+            foreach (Chain chain in chains)
+            {
+                blocksToDestroy.UnionWith(chain.blocks);
+            }
+            Debug.Log("Chains found - destroy");
+            DestroyBlocks(blocksToDestroy);
+        }
+
+    }
+
+    private List<Block> GetPowerBlocksInGrid()
+    {
+        List<Block> powerBlocks = new List<Block>();
+
+        for (int x = 0; x < GRID_WIDTH; x++)
+        {
+
+            for (int y = 0; y < GRID_HEIGHT; y++)
+            {
+                Block block = grid[x, y];
+
+                if (block != null && block.isPowerBlock())
+                {
+                    powerBlocks.Add(block);
+                }
+            }
+        }
+        return powerBlocks;
     }
 
     public void DestroyBlocks(HashSet<Block> blocks)
@@ -152,6 +227,7 @@ public class GameBoard : MonoBehaviour
 
     private void MoveAllBlocksDown()
     {
+        Debug.Log("Moving all blocks down");
         for (int y = 1; y < GRID_HEIGHT; y++)
         {
             for (int x = 0; x < GRID_WIDTH; x++)
@@ -174,6 +250,7 @@ public class GameBoard : MonoBehaviour
                         block.transform.position -= new Vector3(0, movesDown, 0);
                         grid[x, y - movesDown] = grid[x, y];
                         grid[x, y] = null;
+                        CheckBlockHitBottom(block);
                     }
 
                 }
@@ -198,16 +275,18 @@ public class GameBoard : MonoBehaviour
 
             if (isFull)
             {
+                HashSet<Block> blocksToDestroy = new HashSet<Block>();
                 for (int y = 0; y < GRID_HEIGHT; y++)
                 {
                     Block block = grid[x, y];
 
-                    if (block.blockType != BlockType.Border)
+                    if (block.blockType == BlockType.Black || block.blockType == BlockType.White)
                     {
-                        Destroy(block);
-                        grid[x, y] = null;
+                        blocksToDestroy.Add(block);
                     }
                 }
+                Debug.Log("Column full - destroy");
+                DestroyBlocks(blocksToDestroy);
             }
         }
     }

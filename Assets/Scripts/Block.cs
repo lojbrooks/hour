@@ -34,5 +34,13 @@ public class Block : MonoBehaviour
         }
     }
 
+    public bool isPowerBlock()
+    {
+        return blockType != BlockType.White
+            && blockType != BlockType.Black
+            && blockType != BlockType.Border
+            && blockType != BlockType.Empty;
+    }
+
 }
 

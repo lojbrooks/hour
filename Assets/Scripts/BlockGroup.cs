@@ -11,6 +11,7 @@ public class BlockGroup : MonoBehaviour
     private Vector3 startPosition;
     private GameBoard gameBoard;
     private bool dragging;
+    private BlockSpawner blockSpawner = new BlockSpawner();
 
     void Awake()
     {
@@ -71,7 +72,6 @@ public class BlockGroup : MonoBehaviour
 
     private bool IsOverGridSlot()
     {
-        Debug.Log("IsOverGridSlot x = " + transform.position.x + " y = " + transform.position.y);
         return transform.position.y == GameBoard.GRID_HEIGHT - 1 &&
             transform.position.x >= 1 && transform.position.x < GameBoard.GRID_WIDTH - 1;
     }
@@ -86,18 +86,8 @@ public class BlockGroup : MonoBehaviour
 
         foreach (Vector3 spawnPos in spawnPositions)
         {
-            int randomPercent = Random.Range(0, 101);
-            BlockType blockType;
-            if(randomPercent < 50)
-            {
-                blockType = BlockType.White;
-            } else
-            {
-                blockType = BlockType.Black;
-            }
-
             GameObject newBlock = Instantiate(block, spawnPos, Quaternion.identity);
-            newBlock.GetComponent<Block>().blockType = blockType;
+            newBlock.GetComponent<Block>().blockType = blockSpawner.GetBlockTypeForLevel(GameManager.level);
             newBlock.transform.SetParent(transform);
 
         }

@@ -10,18 +10,21 @@ public class GameManager : MonoBehaviour
     private const float COMBO_INCREMENT = 0.05f;
     private float comboMultiplier = 1f;
     private BlockType nextCombo = BlockType.Empty;
+    private BlockType currentCombo = BlockType.Empty;
 
     private long score = 0;
-    private int level = 1;
+    public static int level = 1;
     private int secondsRemaining = 60 * 60;
+    private int timeMultiplier = 1;
 
     private GameBoard gameBoard;
-    private bool isHandlingChains = false;
 
     private void Awake()
     {
         gameBoard = FindObjectOfType<GameBoard>();
         gameBoard.onChainsFound += HandleChains;
+        gameBoard.onPowerBlockDestroyed += HandlePowerBlockDestroyed;
+        gameBoard.onTurnOver += OnTurnOver;
     }
 
     // Start is called before the first frame update
@@ -60,44 +63,54 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void HandleChains(List<Chain> chains)
+    public void HandleChains(List<Chain> chains, bool isChaining)
     {
-        
-        if (!isHandlingChains)
+        if(!isChaining)
         {
-            isHandlingChains = true;
             bool matchedCombo = chains.Any(c => c.chainColor == nextCombo);
-
-            if(nextCombo == BlockType.Empty && chains.Count > 0)
+            if(matchedCombo)
             {
-                nextCombo = chains[0].chainColor;
-            }
-            else if (!matchedCombo)
+                currentCombo = nextCombo;
+            } else
             {
-                comboMultiplier = 1f;
-                nextCombo = BlockType.Empty;
+                currentCombo = chains[0].chainColor;
             }
-
         }
 
-        if (chains.Count > 0)
-        {
-            ScoreAndDestroyChains(chains);
-        }
-        else
-        {
-            OnTurnOver();
-        }
-
+        ScoreChains(chains);
     }
 
-    public void OnTurnOver()
+    public void OnTurnOver(List<Block> powerBlocks)
     {
+
+        ApplyPowerBlockPassiveEffects(powerBlocks);
+
         if(nextCombo != BlockType.Empty)
+        {
+
+            if(currentCombo == nextCombo)
+            {
+                comboMultiplier += COMBO_INCREMENT;
+                if (nextCombo == BlockType.White)
+                {
+                    nextCombo = BlockType.Black;
+                }
+                else
+                {
+                    nextCombo = BlockType.White;
+                }
+            } else
+            {
+                nextCombo = BlockType.Empty;
+                comboMultiplier = 1;
+            }
+
+            
+        } else
         {
             comboMultiplier += COMBO_INCREMENT;
 
-            if (nextCombo == BlockType.White)
+            if (currentCombo == BlockType.White)
             {
                 nextCombo = BlockType.Black;
             }
@@ -107,22 +120,18 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        isHandlingChains = false;
+        currentCombo = BlockType.Empty;
         level = (int)Math.Max(1, Math.Ceiling(Math.Log10(score)));
 
     }
 
-    private void ScoreAndDestroyChains(List<Chain> chains)
-    {
-        HashSet<Block> blocksToDestroy = new HashSet<Block>();
 
+    private void ScoreChains(List<Chain> chains)
+    {
         foreach (Chain chain in chains)
         {
             ScoreChain(chain);
-            blocksToDestroy.UnionWith(chain.blocks);
         }
-
-        gameBoard.DestroyBlocks(blocksToDestroy);
     }
 
     private void ScoreChain(Chain chain)
@@ -133,9 +142,37 @@ public class GameManager : MonoBehaviour
 
     private void OnSecondPassed()
     {
-        if(--secondsRemaining <= 0)
+        secondsRemaining -= (1 * timeMultiplier);
+        if(secondsRemaining <= 0)
         {
             // todo game over
         }
     }
+
+    private void HandlePowerBlockDestroyed(Block block)
+    {
+        
+        switch(block.blockType)
+        {
+            case BlockType.Red:
+                Debug.Log("Red destroyed");
+                timeMultiplier++;
+                break;
+        }
+    }
+
+    private void ApplyPowerBlockPassiveEffects(List<Block> powerBlocks)
+    {
+        foreach(Block block in powerBlocks)
+        {
+            switch (block.blockType)
+            {
+                case BlockType.Red:
+                    Debug.Log("Red in grid");
+                    score += 2;
+                    break;
+            }
+        }
+    }
+
 }
