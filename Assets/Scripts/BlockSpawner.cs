@@ -29,7 +29,7 @@ public class BlockSpawner
 
     private BlockType GetLevel1BlockType()
     {
-        int randomPercent = Random.Range(0, 101);
+        int randomPercent = Random.Range(1, 101);
         BlockType blockType;
         if (randomPercent < 50)
         {
@@ -45,7 +45,7 @@ public class BlockSpawner
 
     private BlockType GetLevel2BlockType()
     {
-        int randomPercent = Random.Range(0, 101);
+        int randomPercent = Random.Range(1, 101);
         BlockType blockType;
         if (randomPercent < 48)
         {
